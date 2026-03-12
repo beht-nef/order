@@ -79,6 +79,73 @@ font-size:16px;
 
 const API_URL="https://script.google.com/macros/s/AKfycbzLQIB8zg_lPmPrNvheeblxJso24QKGifNOkynRiNLlqh0t6cVvGS_tz3D4jCIAXGNe/exec";
 
+let provincesData=[];
+
+async function loadAddress(){
+
+const res=await fetch("https://provinces.open-api.vn/api/?depth=3");
+provincesData=await res.json();
+
+const provinceSelect=document.getElementById("province");
+
+provinceSelect.innerHTML="<option>Chọn tỉnh</option>";
+
+provincesData.forEach(p=>{
+const option=document.createElement("option");
+option.value=p.name;
+option.text=p.name;
+provinceSelect.appendChild(option);
+});
+
+}
+
+document.getElementById("province").addEventListener("change",function(){
+
+const province=this.value;
+
+const districtSelect=document.getElementById("district");
+districtSelect.innerHTML="<option>Chọn quận</option>";
+
+const wardSelect=document.getElementById("ward");
+wardSelect.innerHTML="<option>Chọn phường</option>";
+
+const p=provincesData.find(x=>x.name===province);
+
+p.districts.forEach(d=>{
+
+const option=document.createElement("option");
+option.value=d.name;
+option.text=d.name;
+
+districtSelect.appendChild(option);
+
+});
+
+});
+
+document.getElementById("district").addEventListener("change",function(){
+
+const province=document.getElementById("province").value;
+const district=this.value;
+
+const wardSelect=document.getElementById("ward");
+wardSelect.innerHTML="<option>Chọn phường</option>";
+
+const p=provincesData.find(x=>x.name===province);
+const d=p.districts.find(x=>x.name===district);
+
+d.wards.forEach(w=>{
+
+const option=document.createElement("option");
+option.value=w.name;
+option.text=w.name;
+
+wardSelect.appendChild(option);
+
+});
+
+});
+
 async function submitForm(){
 
 const data={
@@ -102,7 +169,10 @@ alert("Đặt hàng thành công");
 
 }
 
+loadAddress();
+
 </script>
 
 </body>
 </html>
+
