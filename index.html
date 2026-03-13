@@ -71,22 +71,19 @@
             <input name="address" required placeholder="Số nhà, tên đường...">
 
             <label>Tổng tiền hàng (VNĐ)</label>
-            <div style="position: relative;">
-                <input type="text" id="total_display" inputmode="numeric" 
-                       style="color: transparent; caret-color: #2563eb; background: transparent; position: relative; z-index: 2;" 
-                       oninput="formatCurrency(this, 'total', 'total_overlay')">
-                <div id="total_overlay" style="position: absolute; top: 5px; left: 12px; pointer-events: none; z-index: 1; font-size: 15px; color: #334155;"></div>
-            </div>
-            <input type="hidden" name="total" id="total">
-            <span class="sub-label">Nhập số tiền đơn hàng (không bao gồm ship)</span>
+            <input type="text" id="total_display" 
+                   inputmode="numeric" 
+                   placeholder="500.000" 
+                   oninput="formatCurrency(this, 'total')"
+                   style="text-align: left;"> <input type="hidden" name="total" id="total">
+            <span class="sub-label">Nhập số tiền hàng (không bao gồm ship)</span>
             
             <label>Số tiền đã chuyển khoản (VNĐ)</label>
-            <div style="position: relative;">
-                <input type="text" id="paid_display" inputmode="numeric" 
-                       style="color: transparent; caret-color: #2563eb; background: transparent; position: relative; z-index: 2;" 
-                       oninput="formatCurrency(this, 'paid', 'paid_overlay')">
-                <div id="paid_overlay" style="position: absolute; top: 5px; left: 12px; pointer-events: none; z-index: 1; font-size: 15px; color: #334155;"></div>
-            </div>
+            <input type="text" id="paid_display" 
+                   inputmode="numeric" 
+                   placeholder="0" 
+                   oninput="formatCurrency(this, 'paid')"
+                   style="text-align: left;">
             <input type="hidden" name="paid" id="paid">
             
             <div class="total-box">
@@ -140,33 +137,37 @@
     let provincesData = [];
 
     // 1. Định dạng tiền tệ
-                function formatCurrency(input, hiddenId, overlayId) {
-                // 1. Chỉ lấy số thuần túy
-                let value = input.value.replace(/\D/g, "");
+                function formatCurrency(input, hiddenId) {
+                // 1. Lưu vị trí con trỏ và nội dung cũ
+                let cursorPosition = input.selectionStart;
+                let originalValue = input.value;
                 
-                // Giới hạn độ dài để tránh tràn số
-                value = value.substring(0, 12);
-                input.value = value; // Gán lại số thuần túy vào ô nhập (không có dấu chấm nên Telex không lỗi)
+                // 2. Chỉ lấy số thuần túy
+                let rawValue = input.value.replace(/\D/g, "");
+                
+                // Lưu vào input ẩn để gửi lên server
+                document.getElementById(hiddenId).value = rawValue;
             
-                // 2. Lưu vào input ẩn để gửi đi
-                document.getElementById(hiddenId).value = value;
-            
-                // 3. Hiển thị số đẹp lên lớp overlay
-                const overlay = document.getElementById(overlayId);
-                if (value === "") {
-                    overlay.innerText = "";
-                } else {
-                    overlay.innerText = Number(value).toLocaleString('vi-VN');
+                if (rawValue === "") {
+                    input.value = "";
+                    calcRemain();
+                    return;
                 }
-                
-                calcRemain();
-            }
             
-            function calcRemain() {
-                const total = parseFloat(document.getElementById("total").value) || 0;
-                const paid = parseFloat(document.getElementById("paid").value) || 0;
-                const remain = total - paid;
-                document.getElementById("remain_text").innerText = remain.toLocaleString('vi-VN');
+                // 3. Định dạng số đẹp
+                let formattedValue = new Intl.NumberFormat('vi-VN').format(rawValue);
+            
+                // 4. CHỈ CẬP NHẬT KHI CẦN (Đây là chìa khóa để không lỗi Telex)
+                if (originalValue !== formattedValue) {
+                    input.value = formattedValue;
+                    
+                    // Tính toán lại vị trí con trỏ sau khi thêm dấu chấm
+                    let diff = formattedValue.length - originalValue.length;
+                    cursorPosition += diff;
+                    input.setSelectionRange(cursorPosition, cursorPosition);
+                }
+            
+                calcRemain();
             }
     // 2. Ép quy tắc SĐT
     function validatePhone(input) {
@@ -271,6 +272,7 @@
 </script>
 </body>
 </html>
+
 
 
 
