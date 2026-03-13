@@ -71,17 +71,22 @@
             <input name="address" required placeholder="Số nhà, tên đường...">
 
             <label>Tổng tiền hàng (VNĐ)</label>
-            <input type="text" id="total_display" 
-                   inputmode="numeric" 
-                   placeholder="500.000" 
-                   oninput="formatCurrency(this, 'total')">
+            <div style="position: relative;">
+                <input type="text" id="total_display" inputmode="numeric" 
+                       style="color: transparent; caret-color: #2563eb; background: transparent; position: relative; z-index: 2;" 
+                       oninput="formatCurrency(this, 'total', 'total_overlay')">
+                <div id="total_overlay" style="position: absolute; top: 5px; left: 12px; pointer-events: none; z-index: 1; font-size: 15px; color: #334155;"></div>
+            </div>
             <input type="hidden" name="total" id="total">
-
+            <span class="sub-label">Nhập số tiền đơn hàng (không bao gồm ship)</span>
+            
             <label>Số tiền đã chuyển khoản (VNĐ)</label>
-            <input type="text" id="paid_display" 
-                   inputmode="numeric" 
-                   placeholder="0" 
-                   oninput="formatCurrency(this, 'paid')">
+            <div style="position: relative;">
+                <input type="text" id="paid_display" inputmode="numeric" 
+                       style="color: transparent; caret-color: #2563eb; background: transparent; position: relative; z-index: 2;" 
+                       oninput="formatCurrency(this, 'paid', 'paid_overlay')">
+                <div id="paid_overlay" style="position: absolute; top: 5px; left: 12px; pointer-events: none; z-index: 1; font-size: 15px; color: #334155;"></div>
+            </div>
             <input type="hidden" name="paid" id="paid">
             
             <div class="total-box">
@@ -135,40 +140,33 @@
     let provincesData = [];
 
     // 1. Định dạng tiền tệ
-                function formatCurrency(input, hiddenId) {
+                function formatCurrency(input, hiddenId, overlayId) {
                 // 1. Chỉ lấy số thuần túy
                 let value = input.value.replace(/\D/g, "");
                 
-                // Lưu vào input ẩn ngay lập tức để tính toán (không ảnh hưởng bộ gõ)
+                // Giới hạn độ dài để tránh tràn số
+                value = value.substring(0, 12);
+                input.value = value; // Gán lại số thuần túy vào ô nhập (không có dấu chấm nên Telex không lỗi)
+            
+                // 2. Lưu vào input ẩn để gửi đi
                 document.getElementById(hiddenId).value = value;
+            
+                // 3. Hiển thị số đẹp lên lớp overlay
+                const overlay = document.getElementById(overlayId);
+                if (value === "") {
+                    overlay.innerText = "";
+                } else {
+                    overlay.innerText = Number(value).toLocaleString('vi-VN');
+                }
+                
                 calcRemain();
+            }
             
-                // 2. Kỹ thuật né Telex: Chỉ định dạng khi không có ký tự đặc biệt của bộ gõ
-                // Nếu chúng ta định dạng quá nhanh, Telex sẽ bị nhân đôi số
-                // Ta dùng setTimeout để chờ bộ gõ xử lý xong trong 10ms
-                setTimeout(() => {
-                    if (value === "") {
-                        input.value = "";
-                        return;
-                    }
-                    
-                    // Lưu vị trí con trỏ
-                    let cursorPosition = input.selectionStart;
-                    let originalLength = input.value.length;
-            
-                    // Định dạng có dấu chấm
-                    let formattedValue = Number(value).toLocaleString('vi-VN');
-                    
-                    // Chỉ gán lại giá trị nếu nó khác với giá trị hiện tại (giảm tải cho bộ gõ)
-                    if (input.value !== formattedValue) {
-                        input.value = formattedValue;
-                        
-                        // Đặt lại con trỏ
-                        let newLength = formattedValue.length;
-                        cursorPosition = cursorPosition + (newLength - originalLength);
-                        input.setSelectionRange(cursorPosition, cursorPosition);
-                    }
-                }, 10); 
+            function calcRemain() {
+                const total = parseFloat(document.getElementById("total").value) || 0;
+                const paid = parseFloat(document.getElementById("paid").value) || 0;
+                const remain = total - paid;
+                document.getElementById("remain_text").innerText = remain.toLocaleString('vi-VN');
             }
     // 2. Ép quy tắc SĐT
     function validatePhone(input) {
@@ -273,6 +271,7 @@
 </script>
 </body>
 </html>
+
 
 
 
