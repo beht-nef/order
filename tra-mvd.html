@@ -17,12 +17,18 @@
         button:disabled { background: #94a3b8; cursor: not-allowed; }
         #resultBox { margin-top: 25px; padding: 20px; border-radius: 12px; display: none; }
         .success-box { background: #eff6ff; border: 1px dashed #3b82f6; }
-        .pending-box { background: #fffbeb; border: 1px dashed #f59e0b; }
         .error-box { background: #fef2f2; border: 1px dashed #ef4444; }
         .result-title { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
         .tracking-code { font-size: 22px; font-weight: 800; color: #2563eb; margin: 10px 0; word-break: break-all; }
         .no-code { font-size: 16px; color: #64748b; font-style: italic; font-weight: 600; }
-        .copy-btn { padding: 8px 15px; background: #e2e8f0; color: #475569; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-weight: 600; margin-top: 5px; }
+        
+        /* Nút copy và Theo dõi */
+        .btn-group { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+        .copy-btn { padding: 10px 15px; background: #e2e8f0; color: #475569; border-radius: 8px; font-size: 13px; cursor: pointer; border: none; font-weight: 600; flex: 1; transition: 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+        .copy-btn:hover { background: #cbd5e1; }
+        .spx-btn { background: #fb5532 !important; color: white !important; }
+        .spx-btn:hover { background: #e54a2a !important; }
+
         .order-info-box { background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #bfdbfe; text-align: left; font-size: 14px; line-height: 1.6; margin: 15px 0; color: #334155; }
         .highlight-money { color: #dc2626; font-weight: bold; }
     </style>
@@ -39,11 +45,10 @@
 
         <div id="resultBox"></div>
         
-        <a href="index.html" style="display: block; margin-top: 20px; font-size: 13px; color: #64748b; text-decoration: none;">← Quay lại trang nhập thông tin nhận hàng</a>
+        <a href="index.html" style="display: block; margin-top: 20px; font-size: 13px; color: #64748b; text-decoration: none;">← Quay lại trang đặt hàng</a>
     </div>
 
     <script>
-        // LINK GOOGLE SCRIPT MỚI NHẤT
         const API_URL = "https://script.google.com/macros/s/AKfycby_NiGaDCBnA8t24jzN61cVMUA2hinNEVWbklx6_7O_TlaCKdPniB7HgEDT6UMkrWkc/exec";
 
         async function performSearch() {
@@ -92,25 +97,36 @@
                         paymentHtml = `<br>💰 <b>Trạng thái:</b> <span style="color:green; font-weight:bold;">✅ Đã thanh toán</span>`;
                     }
 
-                    // Kiểm tra mã vận đơn
+                    // Xử lý mã vận đơn và link SPX
                     const hasTracking = data.maVanDon && data.maVanDon.toString().trim() !== "";
-                    const trackingDisplay = hasTracking 
-                        ? `<div class="tracking-code" id="trackingCodeText">${data.maVanDon}</div><button class="copy-btn" onclick="copyCode()">📋 Copy mã</button>` 
-                        : `<div class="no-code">Chưa đóng gói xong</div>`;
+                    let trackingDisplay = "";
+
+                    if (hasTracking) {
+                        const mvd = data.maVanDon.toString().trim();
+                        trackingDisplay = `
+                            <div class="tracking-code" id="trackingCodeText">${mvd}</div>
+                            <div class="btn-group">
+                                <button class="copy-btn" onclick="copyCode()">📋 Copy</button>
+                                <a href="https://spx.vn/#/detail/${mvd}" target="_blank" class="copy-btn spx-btn">🚚 Theo dõi đơn</a>
+                            </div>
+                        `;
+                    } else {
+                        trackingDisplay = `<div class="no-code">Chưa đóng gói xong</div>`;
+                    }
 
                     resultBox.innerHTML = `
                         <div class="result-title" style="color: #1d4ed8; font-size: 16px;">🎉 Đã tìm thấy đơn!</div>
                         
                         <div class="order-info-box">
                             👤 <b>Người nhận:</b> ${data.name}<br>
-                            📞 <b>Số điện thoại:</b> ${data.phone}<br>
+                            📞 <b>SĐT:</b> ${data.phone}<br>
                             🏠 <b>Địa chỉ:</b> ${data.address}<br>
                             💳 <b>Thanh toán:</b> ${data.payment}
                             ${paymentHtml}<br>
                             📝 <b>Ghi chú:</b> ${data.note || "Không có"}
                         </div>
 
-                        <div class="result-title" style="color: #64748b; margin-top: 15px;">Mã vận đơn (SPX/GHTK):</div>
+                        <div class="result-title" style="color: #64748b; margin-top: 15px;">Mã vận đơn Shopee Xpress:</div>
                         ${trackingDisplay}
                     `;
                 } else {
