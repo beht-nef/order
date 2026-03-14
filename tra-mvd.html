@@ -23,12 +23,16 @@
         .tracking-code { font-size: 24px; font-weight: 800; color: #2563eb; margin: 10px 0; }
         .copy-btn { padding: 8px 15px; background: #e2e8f0; color: #475569; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; font-weight: 600; }
         .copy-btn:hover { background: #cbd5e1; }
+        
+        /* Box thông tin đơn hàng */
+        .order-info-box { background: #ffffff; padding: 15px; border-radius: 10px; border: 1px solid #bfdbfe; text-align: left; font-size: 14px; line-height: 1.6; margin: 15px 0; color: #334155; }
+        .highlight-money { color: #dc2626; font-weight: bold; font-size: 15px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>📦 Tra Cứu Vận Đơn</h2>
-        <p class="desc">Nhập mã đơn hàng của bạn (VD: OD-123456) để xem mã vận chuyển từ Shop.</p>
+        <p class="desc">Nhập mã đơn hàng của bạn (VD: OD-123456) để xem mã vận chuyển.</p>
         
         <input type="text" id="orderInput" placeholder="Nhập mã đơn hàng...">
         <button id="searchBtn" onclick="performSearch()">Tra cứu ngay</button>
@@ -37,8 +41,8 @@
     </div>
 
     <script>
-        // 🛑 DÁN LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO BÊN DƯỚI 🛑
-        const API_URL = "https://script.google.com/macros/s/AKfycbz90hn_dEmUC91o72cUCa3I4Ew3MR3caTT90XAj6HGgYSnUvjT6zF1F--pFsWKx6XAC/exec";
+        // Link API của bạn
+        const API_URL = "https://script.google.com/macros/s/AKfycbxdABPAobji3e6r_4ap-6WqGQZTpPNe0uSfDX_OOiZX-trRB8YizTlD-IYjEJMb4eZ_/exec";
 
         async function performSearch() {
             const inputEle = document.getElementById('orderInput');
@@ -57,7 +61,6 @@
             resultBox.style.display = "none";
 
             try {
-                // Gọi API lấy dữ liệu
                 const response = await fetch(`${API_URL}?maDon=${maDon}`);
                 const data = await response.json();
 
@@ -67,8 +70,34 @@
                 
                 if (data.status === "success") {
                     resultBox.className = "success-box";
+                    
+                    // ==========================================
+                    // XỬ LÝ LOGIC TIỀN SHIP VÀ COD
+                    // ==========================================
+                    let paymentMethod = data.payment || "";
+                    let balanceNum = Number(String(data.balance).replace(/[^0-9.-]+/g,"")); 
+                    if (isNaN(balanceNum)) balanceNum = 0;
+
+                    let paymentHtml = "";
+                    
+                    // Nếu là COD (Thanh toán khi nhận hàng) -> Cộng 14k ship và hiện ra
+                    if (paymentMethod.toUpperCase().includes("COD")) {
+                        let totalCOD = balanceNum + 14000;
+                        paymentHtml = `<br>💰 <b>Cần thanh toán (+Ship):</b> <span class="highlight-money">${totalCOD.toLocaleString('vi-VN')} VNĐ</span>`;
+                    } 
+                    // Nếu là Chuyển khoản -> paymentHtml rỗng (Không hiện dòng tiền)
+
                     resultBox.innerHTML = `
-                        <div class="result-title" style="color: #1d4ed8;">🎉 Mã vận đơn của bạn là:</div>
+                        <div class="result-title" style="color: #1d4ed8; font-size: 16px;">🎉 Đơn hàng đã được gửi đi!</div>
+                        
+                        <div class="order-info-box">
+                            👤 <b>Người nhận:</b> ${data.name}<br>
+                            📞 <b>SĐT:</b> ${data.phone}<br>
+                            🏠 <b>Địa chỉ:</b> ${data.address}<br>
+                            💳 <b>Hình thức:</b> ${paymentMethod}
+                            ${paymentHtml} </div>
+
+                        <div class="result-title" style="color: #64748b; margin-top: 20px;">Mã vận đơn của bạn:</div>
                         <div class="tracking-code" id="trackingCodeText">${data.maVanDon}</div>
                         <button class="copy-btn" onclick="copyCode()">📋 Copy mã</button>
                     `;
