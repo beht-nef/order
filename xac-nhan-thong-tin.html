@@ -27,7 +27,6 @@
         button:hover { background: #1d4ed8; }
         button:disabled { background: #cbd5e1; cursor: not-allowed; }
         
-        /* NÚT LIÊN HỆ NỔI */
         .contact-buttons { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 999; }
         .contact-item { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: 0.3s; }
         .contact-item:hover { transform: scale(1.1); }
@@ -38,7 +37,6 @@
         .success { display: none; text-align: center; padding: 30px 20px; }
         .order-id-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #e2e8f0; }
         .order-id { font-size: 32px; font-weight: 800; color: #2563eb; }
-        /* Select2 Custom */
         .select2-container .select2-selection--single { height: 46px !important; border-radius: 8px !important; border: 1px solid #cbd5e1 !important; display: flex !important; align-items: center; margin-top: 5px; }
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 44px !important; }
     </style>
@@ -57,7 +55,7 @@
         <form id="orderForm" action="https://script.google.com/macros/s/AKfycbyazgVzVOl6lCjFNzJBgCv72IwEGAW1mwvLq1L6rLWlzvjjgru5_dvY6877hdI06uBZ/exec" method="POST" target="hidden_iframe" onsubmit="return handleSubmit()">
             
             <label>Tên người nhận hàng</label>
-            <input name="name" placeholder="Nguyễn Văn A" required>
+            <input name="name" placeholder="" required>
 
             <label>Số điện thoại (10 số)</label>
             <input name="phone" id="phone" type="tel" placeholder="0912345678" maxlength="10" required oninput="validatePhone(this); updateQRCode();">
@@ -67,6 +65,12 @@
             <select name="district" id="district" required><option value="">Chọn huyện</option></select>
             <select name="ward" id="ward" required><option value="">Chọn xã</option></select>
             <input name="address" required placeholder="Số nhà, tên đường...">
+
+            <label>Bạn đã order qua đâu?</label>
+            <select name="source" id="source" onchange="updateQRCode()">
+                <option value="Facebook">Facebook</option>
+                <option value="Zalo">Zalo</option>
+            </select>
 
             <label>Tên FB / Zalo đã order</label>
             <input name="account" id="account" required placeholder="Ví dụ: Thùy Trang" oninput="updateQRCode()">
@@ -82,14 +86,14 @@
             <input type="hidden" name="paid" id="paid">
             
             <div class="total-box">
-                Tổng thanh toán (tạm tính): <br>
+                Tổng thanh toán (+13k ship): <br>
                 <span class="highlight-red" id="remain_text">0</span> VNĐ
                 <div style="font-size: 11px; color: #64748b; font-weight: 400; margin-top: 5px; font-style: italic;">
-                    (Đã bao gồm 13.000đ phí gửi SPX)
+                    (Mặc định gửi SPX, nếu muốn đổi dvvc vui lòng inbox)
                 </div>
             </div>
 
-            <label>Hình thức thanh toán phần còn lại</label>
+            <label>Phương thức thanh toán phần còn lại</label>
             <select name="payment" id="payment" onchange="togglePaymentNote()">
                 <option value="COD">COD (Thanh toán khi nhận hàng)</option>
                 <option value="Chuyển khoản">Chuyển khoản</option>
@@ -101,7 +105,7 @@
                     <img id="qrCodeImg" src="" alt="Mã QR SePay" style="width: 220px; height: 220px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; background: white; padding: 5px;">
                     <br>
                     <div style="text-align: left; font-size: 13px; margin-top: 15px; background: white; padding: 10px; border-radius: 6px; border: 1px dashed #94a3b8;">
-                        🏦 Ngân hàng: <b>BIDV (Định danh SePay)</b><br>
+                        🏦 Ngân hàng: <b>BIDV </b><br>
                         💳 Số TK: <b>96247HT0511</b><br>
                         👤 Chủ TK: <b>BUI THI HOAI THUONG</b>
                     </div>
@@ -145,22 +149,50 @@
     let provincesData = [];
     const SHIP_FEE = 13000;
 
+    function removeVietnameseTones(str) {
+        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a");
+        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e");
+        str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i");
+        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o");
+        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u");
+        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y");
+        str = str.replace(/đ/g,"d");
+        str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+        str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+        str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+        str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+        str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+        str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+        str = str.replace(/Đ/g, "D");
+        str = str.replace(/[^a-zA-Z0-9 ]/g, "");
+        return str.toUpperCase();
+    }
+
     function updateQRCode() {
         const total = parseFloat(document.getElementById("total").value) || 0;
         const paid = parseFloat(document.getElementById("paid").value) || 0;
-        
-        // Chỉ cộng ship nếu có tiền hàng
         const remainWithShip = total > 0 ? (total - paid) + SHIP_FEE : 0;
         
         const phone = document.getElementById("phone").value;
         const orderId = phone.length >= 6 ? "OD-" + phone.slice(-6) : "OD-" + phone;
+        
+        // LOGIC MỚI: Nhận diện tiền tố FB/ZL
+        const source = document.getElementById("source").value;
+        let prefix = "";
+        if (source === "Facebook") prefix = "FB";
+        else if (source === "Zalo") prefix = "ZL";
+
+        let accName = document.getElementById("account").value;
+        accName = removeVietnameseTones(accName);
+
+        // Nội dung: [ORDERID] [PREFIX] [ACCOUNT]
+        let des = `${orderId} ${prefix} ${accName}`.trim();
 
         let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2`;
-        
         if (remainWithShip > 0) {
-            qrUrl += `&amount=${remainWithShip}&des=${encodeURIComponent(orderId)}`;
+            qrUrl += `&amount=${remainWithShip}&des=${encodeURIComponent(des)}`;
         } else {
-            qrUrl += `&des=${encodeURIComponent(orderId)}`;
+            qrUrl += `&des=${encodeURIComponent(des)}`;
         }
         document.getElementById("qrCodeImg").src = qrUrl;
     }
@@ -175,9 +207,7 @@
     function calcRemain() {
         const total = parseFloat(document.getElementById("total").value) || 0;
         const paid = parseFloat(document.getElementById("paid").value) || 0;
-        
         const remainWithShip = total > 0 ? (total - paid) + SHIP_FEE : 0;
-        
         document.getElementById("remain_text").innerText = remainWithShip > 0 ? remainWithShip.toLocaleString('vi-VN') : "0";
         if (document.getElementById("payment").value === "Chuyển khoản") updateQRCode();
     }
