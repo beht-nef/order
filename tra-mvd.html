@@ -40,7 +40,7 @@
         <div id="resultBox"></div>
     </div>
 
-    <>
+    <script>
         // Link API của bạn
         const API_URL = "https://script.google.com/macros/s/AKfycbyaWBFS9mBQbpdG_BzYE9J-voIOFv5M6uaSgdODfKPdpVBO9QsKdB25q2RVAJ8R7Gsl/exec";
 
@@ -95,7 +95,8 @@
                             📞 <b>SĐT:</b> ${data.phone}<br>
                             🏠 <b>Địa chỉ:</b> ${data.address}<br>
                             💳 <b>Hình thức:</b> ${paymentMethod}
-                            ${paymentHtml} </div>
+                            ${paymentHtml} 
+                        </div>
 
                         <div class="result-title" style="color: #64748b; margin-top: 20px;">Mã vận đơn của bạn:</div>
                         <div class="tracking-code" id="trackingCodeText">${data.maVanDon}</div>
