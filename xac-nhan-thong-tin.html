@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Xác nhận thông tin nhận hàng</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; padding: 20px 10px; color: #334155; margin-bottom: 80px; }
         .container { max-width: 500px; margin: auto; }
@@ -18,10 +15,10 @@
         h2 { text-align: center; margin-top: 0; color: #1e293b; font-weight: 800; }
         .desc { text-align: center; font-size: 14px; color: #64748b; margin-bottom: 20px; }
         label { font-weight: 600; font-size: 13px; display: block; margin-top: 12px; }
-        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 5px; box-sizing: border-box; font-size: 15px; outline: none; }
-        input:focus, select:focus { border-color: #2563eb; }
-        .total-box { background: #eff6ff; padding: 15px; border-radius: 10px; margin: 15px 0; font-weight: 600; text-align: center; color: #1d4ed8; border: 1px dashed #3b82f6; }
-        .highlight-red { color: #dc2626; font-size: 20px; font-weight: 800; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 5px; box-sizing: border-box; font-size: 15px; outline: none; font-family: 'Inter', sans-serif; }
+        input:focus, select:focus, textarea:focus { border-color: #2563eb; }
+        .total-box { background: #eff6ff; padding: 15px; border-radius: 10px; margin: 15px 0; font-weight: 600; color: #1d4ed8; border: 1px dashed #3b82f6; font-size: 14px; line-height: 1.6; }
+        .highlight-red { color: #dc2626; font-weight: 800; font-size: 16px; }
         button#submitBtn { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; }
         
         /* CONTACT BUTTONS */
@@ -40,8 +37,6 @@
         .btn-check-pay { background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .status-paid { color: #059669; font-weight: bold; }
         .status-pending { color: #d97706; font-weight: bold; }
-
-        .select2-container .select2-selection--single { height: 46px !important; border-radius: 8px !important; border: 1px solid #cbd5e1 !important; display: flex !important; align-items: center; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -63,11 +58,12 @@
             <label>Số điện thoại (10 số)</label>
             <input name="phone" id="phone" type="tel" placeholder="0912345678" maxlength="10" required oninput="validatePhone(this); updateQRCode();">
             
-            <label>Địa chỉ nhận hàng</label>
-            <select name="province" id="province" required><option value="">Chọn tỉnh</option></select>
-            <select name="district" id="district" required><option value="">Chọn huyện</option></select>
-            <select name="ward" id="ward" required><option value="">Chọn xã</option></select>
-            <input name="address" id="address_detail" required placeholder="Số nhà, tên đường...">
+            <label>Địa chỉ nhận hàng chi tiết</label>
+            <textarea name="address" id="address_detail" rows="3" required placeholder="Ghi rõ Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."></textarea>
+            <!-- Giữ lại các biến này (ẩn đi) để tránh lỗi Google Apps Script cũ nếu code đang yêu cầu -->
+            <input type="hidden" name="province" value="">
+            <input type="hidden" name="district" value="">
+            <input type="hidden" name="ward" value="">
 
             <label>Bạn đã inbox qua đâu?</label>
             <select name="source" id="source" onchange="updateQRCode()">
@@ -81,28 +77,39 @@
 
             <hr style="margin-top: 25px; border: 0; border-top: 1px solid #eee;">
 
-            <label>Tổng tiền hàng (VNĐ)</label>
-            <input type="tel" id="total_input" inputmode="numeric" placeholder="Ví dụ: 500000" oninput="handleMoneyInput(this, 'total')" onblur="formatOnBlur(this)">
-            <input type="hidden" name="total" id="total">
-            
-            <label>Số tiền đã chuyển khoản/cọc (VNĐ)</label>
-            <input type="tel" id="paid_input" inputmode="numeric" placeholder="Nhập 0 nếu chưa CK" oninput="handleMoneyInput(this, 'paid')" onblur="formatOnBlur(this)">
-            <input type="hidden" name="paid" id="paid">
+            <label>Tổng số box đã mua (265.000 VNĐ/box)</label>
+            <input type="number" id="so_box" name="so_box" min="1" value="1" required oninput="calcRemain()">
+
+            <label>Hình thức Cọc / Thanh toán</label>
+            <select id="hinh_thuc_coc" name="hinh_thuc_coc" onchange="calcRemain()">
+                <option value="coc">Chỉ cọc (130.000 VNĐ/box)</option>
+                <option value="ck">Chuyển khoản toàn bộ</option>
+            </select>
+
+            <!-- 2 input ẩn dùng để gửi số liệu lên Google Sheet -->
+            <input type="hidden" name="total" id="total" value="265000">
+            <input type="hidden" name="paid" id="paid" value="130000">
             
             <div class="total-box">
-                Tổng cộng (+13k ship): <br>
-                <span class="highlight-red" id="remain_text">0</span> VNĐ
+                <p style="margin: 0 0 5px 0;">Tổng tiền hàng: <span id="tong_tien_text" class="highlight-red">265.000</span> VNĐ</p>
+                <p style="margin: 0 0 5px 0;">Số tiền Cọc/CK (Số tiền cần chuyển): <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
+                
+                <div id="can_thanh_toan_div" style="margin: 5px 0; display: block;">
+                    Yêu cầu thanh toán phần còn lại (Thu hộ COD): <span id="remain_text" class="highlight-red">135.000</span> VNĐ
+                </div>
+                
+                <p style="margin: 5px 0 0 0;">Phí ship nội địa: <span id="phi_ship_text" style="color: #059669; font-weight: bold;">14.000 VNĐ</span> <i>(Thanh toán sau)</i></p>
             </div>
 
-            <label>Hình thức thanh toán</label>
+            <label>Phương thức giao dịch</label>
             <select name="payment" id="payment" onchange="togglePaymentNote()">
-                <option value="COD">COD (Thanh toán khi nhận hàng)</option>
-                <option value="Chuyển khoản">Chuyển khoản</option>
+                <option value="Chuyển khoản">Chuyển khoản (Quét mã QR)</option>
+                <option value="COD">Thanh toán khi nhận hàng (Chỉ áp dụng số tiền còn lại)</option>
             </select>
             
-            <div id="transferArea" style="display: none;">
+            <div id="transferArea" style="display: block;">
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #cbd5e1; text-align: center;">
-                    <p style="margin: 0 0 10px 0; font-weight: 600; font-size: 14px;">Quét mã QR để thanh toán (Đã cộng ship)</p>
+                    <p style="margin: 0 0 10px 0; font-weight: 600; font-size: 14px;">Quét mã QR để chuyển khoản<br><small style="color:red;">(Không bao gồm phí ship)</small></p>
                     <img id="qrCodeImg" src="" alt="Mã QR SePay" style="width: 220px; height: 220px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; background: white; padding: 5px;">
                     <div style="text-align: left; font-size: 13px; margin-top: 15px; background: white; padding: 10px; border-radius: 6px; border: 1px dashed #94a3b8;">
                         🏦 Ngân hàng: <b>BIDV (Định danh SePay)</b><br>
@@ -144,13 +151,8 @@
     </div>
 </div>
 
-<iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(submitted){showSuccess();}"></iframe>
-
 <script>
     let submitted = false;
-    let provincesData = [];
-    const SHIP_FEE = 13000;
-    // Đảm bảo API_URL này là URL Web App mới nhất của bạn
     const API_URL = "https://script.google.com/macros/s/AKfycbzamADKpShC7apqEszYOqYGouEXvbAdtfXhr3xR740NnVKPNLoulxn0p2ytMHX2qdgK/exec";
 
     function removeVietnameseTones(str) {
@@ -165,10 +167,50 @@
         return str.toUpperCase();
     }
 
+    function calcRemain() {
+        // Lấy số liệu nhập
+        let soBox = parseInt(document.getElementById("so_box").value);
+        if (isNaN(soBox) || soBox < 1) soBox = 1; 
+
+        let hinhThuc = document.getElementById("hinh_thuc_coc").value;
+        let gia1Box = 265000;
+        let coc1Box = 130000;
+
+        // Tính toán tiền
+        let tongTien = soBox * gia1Box;
+        let tienDaTra = (hinhThuc === "coc") ? (soBox * coc1Box) : tongTien;
+        let tienConLai = tongTien - tienDaTra;
+
+        // Tính toán Ship
+        let phiShip = 0;
+        if (soBox <= 2) phiShip = 14000;
+        else if (soBox > 2 && soBox <= 4) phiShip = 17000;
+
+        // Đẩy ra giao diện
+        document.getElementById("tong_tien_text").innerText = tongTien.toLocaleString('vi-VN');
+        document.getElementById("da_tra_text").innerText = tienDaTra.toLocaleString('vi-VN');
+        
+        if (hinhThuc === "coc") {
+            document.getElementById("can_thanh_toan_div").style.display = "block";
+            document.getElementById("remain_text").innerText = tienConLai.toLocaleString('vi-VN');
+        } else {
+            document.getElementById("can_thanh_toan_div").style.display = "none";
+        }
+
+        if (phiShip > 0) {
+            document.getElementById("phi_ship_text").innerText = phiShip.toLocaleString('vi-VN') + " VNĐ";
+        } else {
+            document.getElementById("phi_ship_text").innerText = "Sẽ báo giá sau";
+        }
+
+        // Cập nhật biến ẩn gửi đi
+        document.getElementById("total").value = tongTien;
+        document.getElementById("paid").value = tienDaTra;
+
+        updateQRCode();
+    }
+
     function updateQRCode() {
-        const total = parseFloat(document.getElementById("total").value) || 0;
-        const paid = parseFloat(document.getElementById("paid").value) || 0;
-        const remainWithShip = total > 0 ? (total - paid) + SHIP_FEE : 0;
         const phone = document.getElementById("phone").value;
         const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
         const source = document.getElementById("source").value;
@@ -176,78 +218,15 @@
         let accName = removeVietnameseTones(document.getElementById("account").value);
 
         let des = `${orderId} ${prefix} ${accName}`.trim();
+        
+        // Số tiền chuyển khoản là số tiền ở mục Đã thanh toán / Cọc
+        const amountToPay = parseFloat(document.getElementById("paid").value) || 0; 
+        
         let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2`;
-        if (remainWithShip > 0) { qrUrl += `&amount=${remainWithShip}&des=${encodeURIComponent(des)}`; }
+        if (amountToPay > 0) { qrUrl += `&amount=${amountToPay}&des=${encodeURIComponent(des)}`; }
         document.getElementById("qrCodeImg").src = qrUrl;
     }
 
-    function handleMoneyInput(input, hiddenId) {
-        let value = input.value.replace(/\D/g, ""); 
-        input.value = value; 
-        document.getElementById(hiddenId).value = value;
-        calcRemain();
-    }
-
-    function calcRemain() {
-        const total = parseFloat(document.getElementById("total").value) || 0;
-        const paid = parseFloat(document.getElementById("paid").value) || 0;
-        const remainWithShip = total > 0 ? (total - paid) + SHIP_FEE : 0;
-        document.getElementById("remain_text").innerText = remainWithShip.toLocaleString('vi-VN');
-        if (document.getElementById("payment").value === "Chuyển khoản") updateQRCode();
-    }
-
-    function formatOnBlur(input) { if (input.value) input.value = Number(input.value.replace(/\D/g, "")).toLocaleString('vi-VN'); }
-
-    async function loadAddress() {
-        try {
-            // Dùng link CDN siêu tốc, đầy đủ 100% dữ liệu và không bị chặn bảo mật
-            const res = await fetch("https://cdn.jsdelivr.net/gh/kenzouno1/DiaGioiHanhChinhVN@master/data.json");
-            let rawData = await res.json();
-            
-            // Tự động xóa số 0 thừa (Phường 06 -> Phường 6) để khách tìm là thấy ngay
-            const cleanName = (str) => str ? str.replace(/ 0(\d)/g, " $1") : "";
-
-            provincesData = rawData.map(p => {
-                p.Name = cleanName(p.Name);
-                if (p.Districts) {
-                    p.Districts.forEach(d => {
-                        d.Name = cleanName(d.Name);
-                        if (d.Wards) {
-                            d.Wards.forEach(w => { w.Name = cleanName(w.Name); });
-                        }
-                    });
-                }
-                return p;
-            });
-
-            const pSelect = document.getElementById("province");
-            pSelect.innerHTML = '<option value="">Chọn tỉnh</option>';
-            provincesData.forEach(p => pSelect.add(new Option(p.Name, p.Name)));
-            $('#province, #district, #ward').select2({ width: '100%' });
-        } catch (err) { console.error("Lỗi địa chỉ:", err); }
-    }
-
-    $('#province').on('change', function() {
-        const dSelect = document.getElementById("district");
-        const wSelect = document.getElementById("ward");
-        dSelect.innerHTML = '<option value="">Chọn huyện</option>';
-        wSelect.innerHTML = '<option value="">Chọn xã</option>';
-        const p = provincesData.find(x => x.Name === this.value);
-        if (p && p.Districts) p.Districts.forEach(d => dSelect.add(new Option(d.Name, d.Name)));
-        $('#district, #ward').trigger('change');
-    });
-
-    $('#district').on('change', function() {
-        const wSelect = document.getElementById("ward");
-        wSelect.innerHTML = '<option value="">Chọn xã</option>';
-        const p = provincesData.find(x => x.Name === document.getElementById("province").value);
-        if(p && p.Districts) {
-            const d = p.Districts.find(x => x.Name === this.value);
-            if (d && d.Wards) d.Wards.forEach(w => wSelect.add(new Option(w.Name, w.Name)));
-        }
-        $('#ward').trigger('change');
-    });
-    
     function validatePhone(input) {
         input.value = input.value.replace(/\D/g, '').substring(0, 10);
         if (input.value.length > 0 && input.value[0] !== '0') input.value = '';
@@ -282,19 +261,19 @@
     function showSuccess() {
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
-        const province = document.getElementById("province").value;
-        const district = document.getElementById("district").value;
-        const ward = document.getElementById("ward").value;
         const address = document.getElementById("address_detail").value;
         const payment = document.getElementById("payment").value;
-        const remain = document.getElementById("remain_text").innerText;
         const note = document.getElementById("note").value;
+
+        // Hiển thị tuỳ theo hình thức thanh toán
+        const hinhThuc = document.getElementById("hinh_thuc_coc").value;
+        const remainAmount = (hinhThuc === "coc") ? document.getElementById("remain_text").innerText + " VNĐ" : "0 VNĐ (Chỉ tính ship COD)";
 
         const orderId = "OD" + phone.slice(-6);
         document.getElementById("displayOrderId").innerText = orderId;
         
         let paymentInfo = (payment === "COD") 
-            ? `💰 <b>Cần trả:</b> <span style="color:red;">${remain} VNĐ</span>`
+            ? `💰 <b>Yêu cầu thu hộ:</b> <span style="color:red;">${remainAmount}</span>`
             : `💳 <b>Trạng thái:</b> <span id="statusSpan" class="status-pending">Đang chờ CK...</span>`;
         
         document.getElementById("checkPayArea").style.display = (payment === "COD") ? "none" : "block";
@@ -302,7 +281,8 @@
         document.getElementById("infoSummary").innerHTML = `
             👤 <b>Người nhận:</b> ${name}<br>
             📞 <b>SĐT:</b> ${phone}<br>
-            🏠 <b>Địa chỉ:</b> ${address}, ${ward}, ${district}, ${province}<br>
+            🏠 <b>Địa chỉ:</b> ${address}<br>
+            📦 <b>Số box:</b> ${document.getElementById("so_box").value} box<br>
             💳 <b>Hình thức:</b> ${payment}<br>
             ${paymentInfo}<br>
             📝 <b>Ghi chú:</b> ${note || "Không có"}
@@ -326,11 +306,13 @@
                 statusSpan.className = "status-paid";
                 msg.innerText = "Hệ thống đã nhận được tiền!";
             } else { msg.innerText = "❌ Chưa thấy giao dịch."; }
-        } catch (e) { msg.innerText = "Lỗi kết nối."; }
+        } catch (e) { msg.innerText = "Lỗi kết nối hoặc cần thời gian cập nhật."; }
     }
 
-    // Cuối cùng gọi hàm nạp địa chỉ
-    loadAddress();
+    // Chạy tính toán 1 lần ngay khi tải xong trang để hiện mặc định
+    window.onload = function() {
+        calcRemain();
+    };
 </script>
 </body>
 </html>
