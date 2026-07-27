@@ -33,10 +33,6 @@
         .order-id-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #e2e8f0; }
         .order-id { font-size: 32px; font-weight: 800; color: #2563eb; }
         .info-summary { text-align: left; background: #f8fafc; padding: 15px; border-radius: 10px; font-size: 14px; line-height: 1.7; border: 1px solid #e2e8f0; margin-top: 15px; color: #334155; }
-        
-        .btn-check-pay { background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        .status-paid { color: #059669; font-weight: bold; }
-        .status-pending { color: #d97706; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -56,24 +52,24 @@
             <input name="name" id="name" placeholder="Nguyễn Văn A" required>
 
             <label>Số điện thoại (10 số)</label>
-            <input name="phone" id="phone" type="tel" placeholder="0912345678" maxlength="10" required oninput="validatePhone(this); updateQRCode();">
+            <input name="phone" id="phone" type="tel" placeholder="0912345678" maxlength="10" required oninput="validatePhone(this);">
             
             <label>Địa chỉ nhận hàng chi tiết</label>
             <textarea name="address" id="address_detail" rows="3" required placeholder="Ghi rõ Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."></textarea>
-            <!-- Giữ lại các biến này (ẩn đi) để tránh lỗi Google Apps Script cũ nếu code đang yêu cầu -->
+            
             <input type="hidden" name="province" value="">
             <input type="hidden" name="district" value="">
             <input type="hidden" name="ward" value="">
 
             <label>Bạn đã inbox qua đâu?</label>
-            <select name="source" id="source" onchange="updateQRCode()">
+            <select name="source" id="source">
                 <option value="Facebook">Facebook</option>
                 <option value="Zalo">Zalo</option>
                 <option value="Khác">Khác</option>
             </select>
 
             <label>Tên FB / Zalo đã order</label>
-            <input name="account" id="account" required placeholder="Ví dụ: Thùy Trang" oninput="updateQRCode()">
+            <input name="account" id="account" required placeholder="Ví dụ: Thùy Trang">
 
             <hr style="margin-top: 25px; border: 0; border-top: 1px solid #eee;">
 
@@ -86,37 +82,19 @@
                 <option value="ck">Chuyển khoản toàn bộ</option>
             </select>
 
-            <!-- 2 input ẩn dùng để gửi số liệu lên Google Sheet -->
             <input type="hidden" name="total" id="total" value="265000">
             <input type="hidden" name="paid" id="paid" value="130000">
             
             <div class="total-box">
                 <p style="margin: 0 0 5px 0;">Tổng tiền hàng: <span id="tong_tien_text" class="highlight-red">265.000</span> VNĐ</p>
-                <p style="margin: 0 0 5px 0;">Số tiền Cọc/CK (Số tiền cần chuyển): <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
+                <p style="margin: 0 0 5px 0;">Số tiền đã Cọc/CK: <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
                 
-                <div id="can_thanh_toan_div" style="margin: 5px 0; display: block;">
-                    Yêu cầu thanh toán phần còn lại (Thu hộ COD): <span id="remain_text" class="highlight-red">135.000</span> VNĐ
+                <div id="can_thanh_toan_div" style="margin: 10px 0; display: block; padding-top: 5px; border-top: 1px dashed #94a3b8;">
+                    Yêu cầu thanh toán phần còn lại: <span id="remain_text" class="highlight-red">135.000</span> VNĐ
+                    <br><small style="color: #64748b; font-weight: 400;">(Mã thanh toán sẽ được cung cấp qua tao-qr.html)</small>
                 </div>
                 
                 <p style="margin: 5px 0 0 0;">Phí ship nội địa: <span id="phi_ship_text" style="color: #059669; font-weight: bold;">14.000 VNĐ</span> <i>(Thanh toán sau)</i></p>
-            </div>
-
-            <label>Phương thức giao dịch</label>
-            <select name="payment" id="payment" onchange="togglePaymentNote()">
-                <option value="Chuyển khoản">Chuyển khoản (Quét mã QR)</option>
-                <option value="COD">Thanh toán khi nhận hàng (Chỉ áp dụng số tiền còn lại)</option>
-            </select>
-            
-            <div id="transferArea" style="display: block;">
-                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #cbd5e1; text-align: center;">
-                    <p style="margin: 0 0 10px 0; font-weight: 600; font-size: 14px;">Quét mã QR để chuyển khoản<br><small style="color:red;">(Không bao gồm phí ship)</small></p>
-                    <img id="qrCodeImg" src="" alt="Mã QR SePay" style="width: 220px; height: 220px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; background: white; padding: 5px;">
-                    <div style="text-align: left; font-size: 13px; margin-top: 15px; background: white; padding: 10px; border-radius: 6px; border: 1px dashed #94a3b8;">
-                        🏦 Ngân hàng: <b>BIDV (Định danh SePay)</b><br>
-                        💳 Số TK: <b>96247HT0511</b><br>
-                        👤 Chủ TK: <b>BUI THI HOAI THUONG</b>
-                    </div>
-                </div>
             </div>
 
             <label>Ghi chú </label>
@@ -136,11 +114,6 @@
         </div>
 
         <div class="info-summary" id="infoSummary"></div>
-        
-        <div id="checkPayArea" style="display:none;">
-            <button class="btn-check-pay" onclick="checkPaymentStatus()">🔄 Kiểm tra trạng thái thanh toán</button>
-            <p id="payStatusMsg" style="font-size: 12px; margin-top: 5px;"></p>
-        </div>
 
         <button onclick="location.reload()" style="background: #94a3b8; color:white; padding:15px; border:none; border-radius:8px; width:100%; margin-top:20px; cursor:pointer; font-weight:600;">Quay lại</button>
     </div>
@@ -152,21 +125,6 @@
 </div>
 
 <script>
-    let submitted = false;
-    const API_URL = "https://script.google.com/macros/s/AKfycbzamADKpShC7apqEszYOqYGouEXvbAdtfXhr3xR740NnVKPNLoulxn0p2ytMHX2qdgK/exec";
-
-    function removeVietnameseTones(str) {
-        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a");
-        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e");
-        str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i");
-        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o");
-        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u");
-        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y");
-        str = str.replace(/đ/g,"d");
-        str = str.replace(/[^a-zA-Z0-9 ]/g, "");
-        return str.toUpperCase();
-    }
-
     function calcRemain() {
         // Lấy số liệu nhập
         let soBox = parseInt(document.getElementById("so_box").value);
@@ -206,35 +164,11 @@
         // Cập nhật biến ẩn gửi đi
         document.getElementById("total").value = tongTien;
         document.getElementById("paid").value = tienDaTra;
-
-        updateQRCode();
-    }
-
-    function updateQRCode() {
-        const phone = document.getElementById("phone").value;
-        const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
-        const source = document.getElementById("source").value;
-        const prefix = (source === "Facebook") ? "FB" : (source === "Zalo" ? "ZL" : "");
-        let accName = removeVietnameseTones(document.getElementById("account").value);
-
-        let des = `${orderId} ${prefix} ${accName}`.trim();
-        
-        // Số tiền chuyển khoản là số tiền ở mục Đã thanh toán / Cọc
-        const amountToPay = parseFloat(document.getElementById("paid").value) || 0; 
-        
-        let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2`;
-        if (amountToPay > 0) { qrUrl += `&amount=${amountToPay}&des=${encodeURIComponent(des)}`; }
-        document.getElementById("qrCodeImg").src = qrUrl;
     }
 
     function validatePhone(input) {
         input.value = input.value.replace(/\D/g, '').substring(0, 10);
         if (input.value.length > 0 && input.value[0] !== '0') input.value = '';
-    }
-
-    function togglePaymentNote() {
-        document.getElementById("transferArea").style.display = (document.getElementById("payment").value === "Chuyển khoản") ? "block" : "none";
-        if (document.getElementById("payment").value === "Chuyển khoản") updateQRCode();
     }
 
     async function handleSubmit(event) {
@@ -262,51 +196,30 @@
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
         const address = document.getElementById("address_detail").value;
-        const payment = document.getElementById("payment").value;
         const note = document.getElementById("note").value;
-
-        // Hiển thị tuỳ theo hình thức thanh toán
         const hinhThuc = document.getElementById("hinh_thuc_coc").value;
-        const remainAmount = (hinhThuc === "coc") ? document.getElementById("remain_text").innerText + " VNĐ" : "0 VNĐ (Chỉ tính ship COD)";
 
         const orderId = "OD" + phone.slice(-6);
         document.getElementById("displayOrderId").innerText = orderId;
         
-        let paymentInfo = (payment === "COD") 
-            ? `💰 <b>Yêu cầu thu hộ:</b> <span style="color:red;">${remainAmount}</span>`
-            : `💳 <b>Trạng thái:</b> <span id="statusSpan" class="status-pending">Đang chờ CK...</span>`;
-        
-        document.getElementById("checkPayArea").style.display = (payment === "COD") ? "none" : "block";
+        let hinhThucText = (hinhThuc === "coc") ? "Chỉ cọc" : "Chuyển khoản toàn bộ";
+        let remainInfo = (hinhThuc === "coc") 
+            ? `💰 <b>Cần thanh toán phần còn lại:</b> <span style="color:red;">${document.getElementById("remain_text").innerText} VNĐ</span>`
+            : `✅ <b>Trạng thái:</b> <span style="color:#059669; font-weight:bold;">Đã thanh toán đủ tiền hàng</span>`;
 
         document.getElementById("infoSummary").innerHTML = `
             👤 <b>Người nhận:</b> ${name}<br>
             📞 <b>SĐT:</b> ${phone}<br>
             🏠 <b>Địa chỉ:</b> ${address}<br>
             📦 <b>Số box:</b> ${document.getElementById("so_box").value} box<br>
-            💳 <b>Hình thức:</b> ${payment}<br>
-            ${paymentInfo}<br>
+            💳 <b>Hình thức:</b> ${hinhThucText}<br>
+            ${remainInfo}<br>
             📝 <b>Ghi chú:</b> ${note || "Không có"}
         `;
 
         document.getElementById("formCard").style.display = "none";
         document.getElementById("successCard").style.display = "block";
         window.scrollTo(0, 0);
-    }
-
-    async function checkPaymentStatus() {
-        const orderId = document.getElementById("displayOrderId").innerText;
-        const statusSpan = document.getElementById("statusSpan");
-        const msg = document.getElementById("payStatusMsg");
-        msg.innerText = "⏳ Đang kiểm tra...";
-        try {
-            const res = await fetch(`${API_URL}?maDon=${orderId}`);
-            const data = await res.json();
-            if (data.status === "success" && data.isPaid) {
-                statusSpan.innerText = "✅ ĐÃ THANH TOÁN";
-                statusSpan.className = "status-paid";
-                msg.innerText = "Hệ thống đã nhận được tiền!";
-            } else { msg.innerText = "❌ Chưa thấy giao dịch."; }
-        } catch (e) { msg.innerText = "Lỗi kết nối hoặc cần thời gian cập nhật."; }
     }
 
     // Chạy tính toán 1 lần ngay khi tải xong trang để hiện mặc định
