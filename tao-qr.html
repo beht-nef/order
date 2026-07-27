@@ -3,229 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Xác nhận thông tin nhận hàng</title>
+    <title>Tạo Mã QR Nhanh</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; padding: 20px 10px; color: #334155; margin-bottom: 80px; }
-        .container { max-width: 500px; margin: auto; }
-        .btn-tracuu { background: #ffffff; color: #2563eb; padding: 10px 18px; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #bfdbfe; display: inline-flex; align-items: center; transition: all 0.3s; margin-bottom: 15px; float: right; }
-        .btn-tracuu:hover { background: #eff6ff; transform: translateY(-2px); }
-        .clearfix::after { content: ""; clear: both; display: table; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); clear: both; }
-        h2 { text-align: center; margin-top: 0; color: #1e293b; font-weight: 800; }
-        .desc { text-align: center; font-size: 14px; color: #64748b; margin-bottom: 20px; }
-        label { font-weight: 600; font-size: 13px; display: block; margin-top: 12px; }
-        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 5px; box-sizing: border-box; font-size: 15px; outline: none; font-family: 'Inter', sans-serif; }
-        input:focus, select:focus, textarea:focus { border-color: #2563eb; }
-        .total-box { background: #eff6ff; padding: 15px; border-radius: 10px; margin: 15px 0; font-weight: 600; color: #1d4ed8; border: 1px dashed #3b82f6; font-size: 14px; line-height: 1.6; }
-        .highlight-red { color: #dc2626; font-weight: 800; font-size: 16px; }
-        button#submitBtn { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; padding: 20px 10px; color: #334155; display: flex; justify-content: center; align-items: center; min-height: 95vh; margin: 0; }
+        .card { background: white; padding: 30px 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 380px; text-align: center; border: 1px solid #e2e8f0; }
+        h2 { margin-top: 0; color: #1e293b; font-weight: 800; font-size: 22px; }
+        label { font-weight: 600; font-size: 13px; display: block; margin-top: 15px; text-align: left; color: #64748b; }
+        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #cbd5e1; margin-top: 5px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; background: #fcfcfc; }
+        input:focus { border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
         
-        /* CONTACT BUTTONS */
-        .contact-buttons { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 12px; z-index: 999; }
-        .contact-item { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: 0.3s; }
-        .contact-item img { width: 30px; height: 30px; }
-        .zalo-btn { background: #0088ff; }
-        .messenger-btn { background: #0084ff; }
+        .qr-container { margin-top: 25px; padding: 20px; background: #f1f5f9; border-radius: 16px; display: none; animation: fadeIn 0.4s ease; }
+        #qrImg { width: 100%; max-width: 240px; border-radius: 12px; background: white; padding: 8px; border: 1px solid #dee2e6; }
+        
+        .btn-gen { width: 100%; padding: 16px; background: #2563eb; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+        .btn-gen:hover { background: #1d4ed8; transform: translateY(-1px); }
+        
+        .btn-download { width: 100%; padding: 12px; background: #ffffff; color: #2563eb; border: 2px solid #2563eb; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 15px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-download:hover { background: #eff6ff; }
 
-        /* SUCCESS CARD */
-        .success { display: none; text-align: center; padding: 10px 0; }
-        .order-id-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #e2e8f0; }
-        .order-id { font-size: 32px; font-weight: 800; color: #2563eb; }
-        .info-summary { text-align: left; background: #f8fafc; padding: 15px; border-radius: 10px; font-size: 14px; line-height: 1.7; border: 1px solid #e2e8f0; margin-top: 15px; color: #334155; }
+        .info-bank { text-align: center; font-size: 13px; margin-top: 15px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        a.back { display: block; margin-top: 25px; font-size: 13px; color: #94a3b8; text-decoration: none; transition: 0.3s; }
+        a.back:hover { color: #2563eb; }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h2>⚡ Tạo QR Chuyển Tiền</h2>
+        <p style="font-size: 14px; color: #64748b; margin-top: -5px;">Nhanh chóng & Linh hoạt</p>
 
-<div class="container">
-    <div class="clearfix">
-        <a href="tra-mvd.html" class="btn-tracuu">📦 Tra cứu vận đơn</a>
-    </div>
-
-    <div class="card" id="formCard">
-        <h2>Xác nhận thông tin</h2>
-        <p class="desc">Vui lòng điền đúng thông tin để shop gửi hàng</p>
-
-        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbzamADKpShC7apqEszYOqYGouEXvbAdtfXhr3xR740NnVKPNLoulxn0p2ytMHX2qdgK/exec" method="POST" onsubmit="handleSubmit(event)">
-            
-            <label>Tên người nhận hàng</label>
-            <input name="name" id="name" placeholder="Nguyễn Văn A" required>
-
-            <label>Số điện thoại (10 số)</label>
-            <input name="phone" id="phone" type="tel" placeholder="0912345678" maxlength="10" required oninput="validatePhone(this);">
-            
-            <label>Địa chỉ nhận hàng chi tiết</label>
-            <textarea name="address" id="address_detail" rows="3" required placeholder="Ghi rõ Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."></textarea>
-            
-            <input type="hidden" name="province" value="">
-            <input type="hidden" name="district" value="">
-            <input type="hidden" name="ward" value="">
-
-            <label>Bạn đã inbox qua đâu?</label>
-            <select name="source" id="source">
-                <option value="Facebook">Facebook</option>
-                <option value="Zalo">Zalo</option>
-                <option value="Khác">Khác</option>
-            </select>
-
-            <label>Tên FB / Zalo đã order</label>
-            <input name="account" id="account" required placeholder="Ví dụ: Thùy Trang">
-
-            <hr style="margin-top: 25px; border: 0; border-top: 1px solid #eee;">
-
-            <label>Tổng số box đã mua (265.000 VNĐ/box)</label>
-            <input type="number" id="so_box" name="so_box" min="1" value="1" required oninput="calcRemain()">
-
-            <label>Hình thức Cọc / Thanh toán</label>
-            <select id="hinh_thuc_coc" name="hinh_thuc_coc" onchange="calcRemain()">
-                <option value="coc">Chỉ cọc (130.000 VNĐ/box)</option>
-                <option value="ck">Chuyển khoản toàn bộ</option>
-            </select>
-
-            <input type="hidden" name="total" id="total" value="265000">
-            <input type="hidden" name="paid" id="paid" value="130000">
-            
-            <div class="total-box">
-                <p style="margin: 0 0 5px 0;">Tổng tiền hàng: <span id="tong_tien_text" class="highlight-red">265.000</span> VNĐ</p>
-                <p style="margin: 0 0 5px 0;">Số tiền đã Cọc/CK: <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
-                
-                <div id="can_thanh_toan_div" style="margin: 10px 0; display: block; padding-top: 5px; border-top: 1px dashed #94a3b8;">
-                    Yêu cầu thanh toán phần còn lại: <span id="remain_text" class="highlight-red">135.000</span> VNĐ
-                    <br><small style="color: #64748b; font-weight: 400;">(Mã thanh toán sẽ được cung cấp qua tao-qr.html)</small>
-                </div>
-                
-                <p style="margin: 5px 0 0 0;">Phí ship nội địa: <span id="phi_ship_text" style="color: #059669; font-weight: bold;">14.000 VNĐ</span> <i>(Thanh toán sau)</i></p>
-            </div>
-
-            <label>Ghi chú </label>
-            <textarea name="note" id="note" placeholder="Nếu có"></textarea>
-
-            <button type="submit" id="submitBtn">Xác nhận đơn hàng</button>
-        </form>
-    </div>
-
-    <div class="card success" id="successCard">
-        <div style="font-size: 50px;">✅</div>
-        <h2>Gửi đơn thành công!</h2>
+        <label>Số tiền (Tùy chọn)</label>
+        <input type="tel" id="amount_input" placeholder="0" oninput="formatMoney(this)">
         
-        <div class="order-id-box">
-            <p style="margin:0; font-size:13px; color:#64748b;">Mã đơn của bạn:</p>
-            <div class="order-id" id="displayOrderId"></div>
+        <label>Nội dung (Tùy chọn)</label>
+        <input type="text" id="description_input" placeholder="VD: Tra tien ao, Order..." maxlength="50">
+
+        <button class="btn-gen" onclick="generateQR()">Tạo mã quét ngay</button>
+
+        <div class="qr-container" id="qrBox">
+            <img id="qrImg" src="" alt="Mã QR BIDV">
+            
+            <button class="btn-download" onclick="downloadQR()">
+                📥 Tải ảnh QR về máy
+            </button>
+
+            <div class="info-bank">
+                🏦 <b>BIDV</b>: 96247HT0511<br>
+                👤 <b>BUI THI HOAI THUONG</b>
+            </div>
+            <p id="note" style="font-size: 11px; margin-top: 10px; color: #64748b; font-style: italic;"></p>
         </div>
 
-        <div class="info-summary" id="infoSummary"></div>
-
-        <button onclick="location.reload()" style="background: #94a3b8; color:white; padding:15px; border:none; border-radius:8px; width:100%; margin-top:20px; cursor:pointer; font-weight:600;">Quay lại</button>
+        <a href="index.html" class="back">← Quay lại trang chính</a>
     </div>
 
-    <div class="contact-buttons">
-        <a href="https://zalo.me/0346044253" target="_blank" class="contact-item zalo-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png"></a>
-        <a href="https://m.me/beht.nef" target="_blank" class="contact-item messenger-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Facebook_Messenger_logo_2020.svg/2048px-Facebook_Messenger_logo_2020.svg.png"></a>
-    </div>
-</div>
-
-<script>
-    function calcRemain() {
-        // Lấy số liệu nhập
-        let soBox = parseInt(document.getElementById("so_box").value);
-        if (isNaN(soBox) || soBox < 1) soBox = 1; 
-
-        let hinhThuc = document.getElementById("hinh_thuc_coc").value;
-        let gia1Box = 265000;
-        let coc1Box = 130000;
-
-        // Tính toán tiền
-        let tongTien = soBox * gia1Box;
-        let tienDaTra = (hinhThuc === "coc") ? (soBox * coc1Box) : tongTien;
-        let tienConLai = tongTien - tienDaTra;
-
-        // Tính toán Ship
-        let phiShip = 0;
-        if (soBox <= 2) phiShip = 14000;
-        else if (soBox > 2 && soBox <= 4) phiShip = 17000;
-
-        // Đẩy ra giao diện
-        document.getElementById("tong_tien_text").innerText = tongTien.toLocaleString('vi-VN');
-        document.getElementById("da_tra_text").innerText = tienDaTra.toLocaleString('vi-VN');
-        
-        if (hinhThuc === "coc") {
-            document.getElementById("can_thanh_toan_div").style.display = "block";
-            document.getElementById("remain_text").innerText = tienConLai.toLocaleString('vi-VN');
-        } else {
-            document.getElementById("can_thanh_toan_div").style.display = "none";
+    <script>
+        function formatMoney(input) {
+            let value = input.value.replace(/\D/g, "");
+            if (value) input.value = Number(value).toLocaleString('vi-VN');
         }
 
-        if (phiShip > 0) {
-            document.getElementById("phi_ship_text").innerText = phiShip.toLocaleString('vi-VN') + " VNĐ";
-        } else {
-            document.getElementById("phi_ship_text").innerText = "Sẽ báo giá sau";
+        function removeVietnameseTones(str) {
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y");
+            str = str.replace(/đ/g,"d");
+            return str.toUpperCase().replace(/[^A-Z0-9 ]/g, "");
         }
 
-        // Cập nhật biến ẩn gửi đi
-        document.getElementById("total").value = tongTien;
-        document.getElementById("paid").value = tienDaTra;
-    }
+        function generateQR() {
+            const amount = document.getElementById("amount_input").value.replace(/\D/g, "");
+            const rawDes = document.getElementById("description_input").value;
+            const des = removeVietnameseTones(rawDes);
+            
+            let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2`;
+            if (amount && amount !== "0") { qrUrl += `&amount=${amount}`; }
+            if (des) { qrUrl += `&des=${encodeURIComponent(des)}`; }
 
-    function validatePhone(input) {
-        input.value = input.value.replace(/\D/g, '').substring(0, 10);
-        if (input.value.length > 0 && input.value[0] !== '0') input.value = '';
-    }
-
-    async function handleSubmit(event) {
-        event.preventDefault();
-        const btn = document.getElementById("submitBtn");
-        btn.innerText = "⏳ Đang gửi...";
-        btn.disabled = true;
-
-        const form = document.getElementById("orderForm");
-        const formData = new FormData(form);
-        const data = new URLSearchParams();
-        for (const pair of formData) { data.append(pair[0], pair[1]); }
-
-        try {
-            await fetch(form.action, { method: "POST", body: data, mode: 'no-cors' });
-            setTimeout(() => { showSuccess(); }, 500);
-        } catch (error) {
-            alert("Lỗi gửi đơn!");
-            btn.innerText = "Xác nhận đơn hàng";
-            btn.disabled = false;
+            document.getElementById("qrImg").src = qrUrl;
+            document.getElementById("qrBox").style.display = "block";
+            
+            const note = document.getElementById("note");
+            note.innerText = (amount && amount !== "0") ? `QR số tiền ${Number(amount).toLocaleString('vi-VN')}đ` : "Tự nhập số tiền khi CK";
         }
-    }
 
-    function showSuccess() {
-        const name = document.getElementById("name").value;
-        const phone = document.getElementById("phone").value;
-        const address = document.getElementById("address_detail").value;
-        const note = document.getElementById("note").value;
-        const hinhThuc = document.getElementById("hinh_thuc_coc").value;
+        // HÀM TẢI ẢNH THÔNG MINH (Xử lý được lỗi Cross-Origin)
+        async function downloadQR() {
+            const imgUrl = document.getElementById("qrImg").src;
+            const btn = document.querySelector(".btn-download");
+            
+            btn.innerText = "⏳ Đang tải...";
+            btn.disabled = true;
 
-        const orderId = "OD" + phone.slice(-6);
-        document.getElementById("displayOrderId").innerText = orderId;
-        
-        let hinhThucText = (hinhThuc === "coc") ? "Chỉ cọc" : "Chuyển khoản toàn bộ";
-        let remainInfo = (hinhThuc === "coc") 
-            ? `💰 <b>Cần thanh toán phần còn lại:</b> <span style="color:red;">${document.getElementById("remain_text").innerText} VNĐ</span>`
-            : `✅ <b>Trạng thái:</b> <span style="color:#059669; font-weight:bold;">Đã thanh toán đủ tiền hàng</span>`;
-
-        document.getElementById("infoSummary").innerHTML = `
-            👤 <b>Người nhận:</b> ${name}<br>
-            📞 <b>SĐT:</b> ${phone}<br>
-            🏠 <b>Địa chỉ:</b> ${address}<br>
-            📦 <b>Số box:</b> ${document.getElementById("so_box").value} box<br>
-            💳 <b>Hình thức:</b> ${hinhThucText}<br>
-            ${remainInfo}<br>
-            📝 <b>Ghi chú:</b> ${note || "Không có"}
-        `;
-
-        document.getElementById("formCard").style.display = "none";
-        document.getElementById("successCard").style.display = "block";
-        window.scrollTo(0, 0);
-    }
-
-    // Chạy tính toán 1 lần ngay khi tải xong trang để hiện mặc định
-    window.onload = function() {
-        calcRemain();
-    };
-</script>
+            try {
+                const response = await fetch(imgUrl);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "QR-Thanh-Toan.png";
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert("Không thể tải ảnh tự động. Bạn hãy nhấn giữ vào ảnh QR để lưu nhé!");
+            } finally {
+                btn.innerHTML = "📥 Tải ảnh QR về máy";
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>
