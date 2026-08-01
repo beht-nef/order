@@ -44,13 +44,11 @@
         <a href="tra-mvd.html" class="btn-tracuu">📦 Tra cứu vận đơn</a>
     </div>
 
-    <!-- BƯỚC 1: NHẬP THÔNG TIN -->
     <div class="card" id="formCard">
         <h2>Xác nhận thông tin</h2>
         <p class="desc">Vui lòng điền đúng thông tin để shop gửi hàng</p>
 
-        <!-- Thay onsubmit thành goToPayment -->
-        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbzamADKpShC7apqEszYOqYGouEXvbAdtfXhr3xR740NnVKPNLoulxn0p2ytMHX2qdgK/exec" method="POST" onsubmit="goToPayment(event)">
+        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbzPpaoQVgnU8WKZkKkfavIPdgU88m8zZPDFi3FQ8XmrxAgluzy4CMGAvpxxudPNpWkF/exec" method="POST" onsubmit="goToPayment(event)">
             
             <label>Tên người nhận hàng</label>
             <input name="name" id="name" placeholder="Nguyễn Văn A" required>
@@ -93,10 +91,10 @@
                 <p style="margin: 0 0 5px 0;">Số tiền cần Cọc/CK: <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
                 
                 <div id="can_thanh_toan_div" style="margin: 10px 0; display: block; padding-top: 5px; border-top: 1px dashed #3b82f6;">
-                    Yêu cầu thanh toán phần còn lại: <span id="remain_text" class="highlight-red">135.000</span> VNĐ
+                    Số tiền cần CK phần còn lại: <span id="remain_text" class="highlight-red">135.000</span> VNĐ
                 </div>
                 
-                <p style="margin: 5px 0 0 0;">Phí ship: <span id="phi_ship_text" style="color: #059669; font-weight: bold;">14.000 VNĐ</span> <i>(Thanh toán sau)</i></p>
+                <p style="margin: 5px 0 0 0;">Phí ship: <span id="phi_ship_text" style="color: #059669; font-weight: bold;">14.000 VNĐ</span> <i>(Thanh toán cho Shipper)</i></p>
             </div>
 
             <label>Ghi chú </label>
@@ -106,7 +104,6 @@
         </form>
     </div>
 
-    <!-- BƯỚC 2: QUÉT MÃ THANH TOÁN (Ban đầu bị ẩn) -->
     <div class="card" id="paymentCard" style="display: none; text-align: center;">
         <h2 style="margin-bottom: 5px;">Thanh toán đơn hàng</h2>
         <p class="desc" style="margin-bottom: 15px;">Quét mã QR dưới đây để thanh toán</p>
@@ -125,7 +122,6 @@
         <button class="btn-secondary" onclick="backToForm()">Quay lại chỉnh sửa thông tin</button>
     </div>
 
-    <!-- BƯỚC 3: BÁO THÀNH CÔNG (Ban đầu bị ẩn) -->
     <div class="card success" id="successCard" style="display: none; text-align: center;">
         <div style="font-size: 50px;">🎉</div>
         <h2>Gửi đơn thành công!</h2>
@@ -205,9 +201,8 @@
         if (input.value.length > 0 && input.value[0] !== '0') input.value = '';
     }
 
-    // HÀM CHUYỂN SANG BƯỚC THANH TOÁN KHI BẤM NÚT Ở FORM
     function goToPayment(event) {
-        event.preventDefault(); // Chặn gửi form ngay lập tức
+        event.preventDefault(); 
 
         const phone = document.getElementById("phone").value;
         const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
@@ -218,30 +213,25 @@
         let des = `${orderId} ${prefix} ${accName}`.trim();
         const amountToPay = parseFloat(document.getElementById("paid").value) || 0; 
         
-        // Tạo link QR
         let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2`;
         if (amountToPay > 0) { 
             qrUrl += `&amount=${amountToPay}&des=${encodeURIComponent(des)}`; 
         }
         
-        // Cập nhật ảnh QR và chữ vào Bước 2
         document.getElementById("qrCodeImg").src = qrUrl;
         document.getElementById("payAmountTxt").innerText = amountToPay.toLocaleString('vi-VN') + " VNĐ";
         document.getElementById("payDescTxt").innerText = des;
 
-        // Ẩn form, hiện phần thanh toán
         document.getElementById("formCard").style.display = "none";
         document.getElementById("paymentCard").style.display = "block";
         window.scrollTo(0, 0);
     }
 
-    // HÀM QUAY LẠI FORM (NẾU KHÁCH MUỐN SỬA ĐỊA CHỈ, SĐT)
     function backToForm() {
         document.getElementById("paymentCard").style.display = "none";
         document.getElementById("formCard").style.display = "block";
     }
 
-    // HÀM GỬI LÊN GOOGLE SHEET KHI BẤM "TÔI ĐÃ THANH TOÁN"
     async function submitFormToSheet() {
         const btn = document.getElementById("confirmPayBtn");
         btn.innerText = "⏳ Đang gửi hệ thống...";
@@ -262,7 +252,6 @@
         }
     }
 
-    // HÀM BÁO THÀNH CÔNG VÀ HIỂN THỊ TÓM TẮT (BƯỚC 3)
     function showSuccess() {
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
@@ -274,8 +263,10 @@
         document.getElementById("displayOrderId").innerText = orderId;
         
         let hinhThucText = (hinhThuc === "coc") ? "Chỉ cọc" : "Chuyển khoản toàn bộ";
+        
+        // --- CHỈNH SỬA TỪ NGỮ Ở ĐÂY ---
         let remainInfo = (hinhThuc === "coc") 
-            ? `💰 <b>Cần thu hộ phần còn lại:</b> <span style="color:red;">${document.getElementById("remain_text").innerText} VNĐ</span>`
+            ? `💰 <b>Cần CK phần còn lại:</b> <span style="color:red;">${document.getElementById("remain_text").innerText} VNĐ</span>`
             : `✅ <b>Trạng thái:</b> <span style="color:#059669; font-weight:bold;">Đã thanh toán đủ tiền hàng</span>`;
 
         document.getElementById("infoSummary").innerHTML = `
@@ -293,7 +284,6 @@
         window.scrollTo(0, 0);
     }
 
-    // Chạy tính toán 1 lần ngay khi tải xong trang để hiện mặc định
     window.onload = function() {
         calcRemain();
     };
