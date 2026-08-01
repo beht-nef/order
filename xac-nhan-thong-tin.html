@@ -31,8 +31,6 @@
         .contact-item img { width: 35px; height: 35px; object-fit: contain; }
 
         /* SUCCESS CARD */
-        .order-id-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #e2e8f0; text-align: center; }
-        .order-id { font-size: 32px; font-weight: 800; color: #2563eb; }
         .info-summary { text-align: left; background: #f8fafc; padding: 15px; border-radius: 10px; font-size: 14px; line-height: 1.7; border: 1px solid #e2e8f0; margin-top: 15px; color: #334155; }
     </style>
 </head>
@@ -47,7 +45,7 @@
         <h2>Xác nhận thông tin</h2>
         <p class="desc">Vui lòng điền đúng thông tin để shop gửi hàng</p>
 
-        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbwQRqgJtig3_vl4ODCAt7wQM46Y0U-oy-CcETcL4w3mQfkvhKc163BGnpHGtfqLwRly/exec" method="POST" onsubmit="goToPayment(event)">
+        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbzamADKpShC7apqEszYOqYGouEXvbAdtfXhr3xR740NnVKPNLoulxn0p2ytMHX2qdgK/exec" method="POST" onsubmit="goToPayment(event)">
             
             <label>Tên người nhận hàng</label>
             <input name="name" id="name" placeholder="Nguyễn Văn A" required>
@@ -57,7 +55,7 @@
             
             <label>Địa chỉ nhận hàng chi tiết</label>
             <textarea name="address" id="address_detail" rows="3" required placeholder="Ghi rõ Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."></textarea>
-            
+
             <label>Bạn đã order qua đâu?</label>
             <select name="source" id="source">
                 <option value="Facebook">Facebook</option>
@@ -121,11 +119,6 @@
         <div style="font-size: 50px;">🎉</div>
         <h2>Gửi đơn thành công!</h2>
         
-        <div class="order-id-box">
-            <p style="margin:0; font-size:13px; color:#64748b;">Mã đơn của bạn:</p>
-            <div class="order-id" id="displayOrderId"></div>
-        </div>
-
         <div class="info-summary" id="infoSummary"></div>
 
         <button onclick="location.reload()" class="btn-secondary">Gửi thêm đơn mới</button>
@@ -206,12 +199,12 @@
             submitFormDirectly();
         } else {
             const phone = document.getElementById("phone").value;
-            const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
             const source = document.getElementById("source").value;
             const prefix = (source === "Facebook") ? "FB" : (source === "Zalo" ? "ZL" : "");
             let accName = removeVietnameseTones(document.getElementById("account").value);
 
-            let des = `${orderId} ${prefix} ${accName}`.trim();
+            // Thay đổi nội dung QR Code sử dụng Số điện thoại thay cho Mã OD
+            let des = `${phone} ${prefix} ${accName}`.trim();
             
             let total = parseFloat(document.getElementById("total").value) || 0;
             let paid = parseFloat(document.getElementById("paid").value) || 0;
@@ -281,8 +274,7 @@
         const note = document.getElementById("note").value;
         const hinhThuc = document.getElementById("hinh_thuc_coc").value;
 
-        const orderId = "OD" + phone.slice(-6);
-        document.getElementById("displayOrderId").innerText = orderId;
+        // Đã xóa phần xử lý hiển thị orderId ở giao diện
         
         let hinhThucText = (hinhThuc === "coc") ? "Chỉ cọc (Đã tạo mã thanh toán phần còn lại)" : "Đã chuyển khoản toàn bộ";
         
