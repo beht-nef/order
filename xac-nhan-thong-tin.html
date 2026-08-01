@@ -48,7 +48,7 @@
         <h2>Xác nhận thông tin</h2>
         <p class="desc">Vui lòng điền đúng thông tin để shop gửi hàng</p>
 
-        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbx6L3o42UIZlHvG314tlawD3k7k1FX9V7iEen30n6PRR8XqnGVrJ1QWGfJJ1cxpGY5s/exec" method="POST" onsubmit="goToPayment(event)">
+        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbzDgyjlFxIpIbN-NgYjf6EAwbNprxXMSqHvqg2-wIQM011WZ_nBST8ykgC9Pb05AVlA/exec" method="POST" onsubmit="goToPayment(event)">
             
             <label>Tên người nhận hàng</label>
             <input name="name" id="name" placeholder="Nguyễn Văn A" required>
@@ -59,10 +59,6 @@
             <label>Địa chỉ nhận hàng chi tiết</label>
             <textarea name="address" id="address_detail" rows="3" required placeholder="Ghi rõ Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."></textarea>
             
-            <input type="hidden" name="province" value="">
-            <input type="hidden" name="district" value="">
-            <input type="hidden" name="ward" value="">
-
             <label>Bạn đã order qua đâu?</label>
             <select name="source" id="source">
                 <option value="Facebook">Facebook</option>
@@ -174,7 +170,6 @@
         document.getElementById("tong_tien_text").innerText = tongTien.toLocaleString('vi-VN');
         document.getElementById("da_tra_text").innerText = tienDaTra.toLocaleString('vi-VN');
         
-        // ĐỔI TEXT NÚT BẤM DỰA VÀO HÌNH THỨC
         if (hinhThuc === "coc") {
             document.getElementById("can_thanh_toan_div").style.display = "block";
             document.getElementById("remain_text").innerText = tienConLai.toLocaleString('vi-VN');
@@ -204,12 +199,9 @@
         
         let hinhThuc = document.getElementById("hinh_thuc_coc").value;
 
-        // BỎ QUA QR NẾU ĐÃ CHUYỂN KHOẢN TOÀN BỘ
         if (hinhThuc === "ck") {
             submitFormDirectly();
-        } 
-        // HIỆN QR CHO SỐ TIỀN CÒN LẠI NẾU CHỌN CỌC
-        else {
+        } else {
             const phone = document.getElementById("phone").value;
             const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
             const source = document.getElementById("source").value;
@@ -220,7 +212,7 @@
             
             let total = parseFloat(document.getElementById("total").value) || 0;
             let paid = parseFloat(document.getElementById("paid").value) || 0;
-            let remain = total - paid; // CHỈ TẠO QR ĐÚNG SỐ TIỀN CÒN LẠI
+            let remain = total - paid;
             
             let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2&amount=${remain}&des=${encodeURIComponent(des)}`;
             
@@ -234,7 +226,6 @@
         }
     }
 
-    // HÀM GỬI FORM TRỰC TIẾP (DÀNH CHO KHÁCH CK TOÀN BỘ)
     async function submitFormDirectly() {
         const btn = document.getElementById("nextBtn");
         btn.innerText = "⏳ Đang xử lý...";
@@ -255,7 +246,6 @@
         }
     }
 
-    // HÀM GỬI FORM SAU KHI QUÉT QR (DÀNH CHO KHÁCH CỌC)
     async function submitFormToSheet() {
         const btn = document.getElementById("confirmPayBtn");
         btn.innerText = "⏳ Đang gửi hệ thống...";
