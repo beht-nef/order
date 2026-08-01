@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Tra Cứu Mã Vận Đơn</title>
+    <title>Tra Cứu Đơn Hàng</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
     <style>
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; padding: 20px 10px; color: #334155; display: flex; justify-content: center; align-items: center; min-height: 90vh; margin: 0; }
         .card { background: white; padding: 30px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         h2 { margin-top: 0; color: #1e293b; font-weight: 800; }
         .desc { font-size: 14px; color: #64748b; margin-bottom: 25px; }
-        input { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 16px; outline: none; text-align: center; font-weight: 600; text-transform: uppercase; }
-        .note-mvd { font-size: 11px; color: #2563eb; margin-top: 8px; margin-bottom: 20px; font-style: italic; font-weight: 500; }
+        input { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 16px; outline: none; text-align: center; font-weight: 600; }
+        .note-mvd { font-size: 12px; color: #2563eb; margin-top: 8px; margin-bottom: 20px; font-style: italic; font-weight: 500; }
         button { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         button:hover { background: #1d4ed8; }
         button:disabled { background: #94a3b8; cursor: not-allowed; }
@@ -35,10 +35,10 @@
 <body>
     <div class="card">
         <h2>📦 Tra Cứu Đơn Hàng</h2>
-        <p class="desc">Vui lòng nhập mã đơn để xem trạng thái</p>
+        <p class="desc">Vui lòng nhập số điện thoại để xem trạng thái</p>
         
-        <input type="text" id="orderInput" placeholder="VD: OD123456">
-        <div class="note-mvd">Mã đơn của bạn là: OD + 6 số cuối SĐT</div>
+        <input type="tel" id="orderInput" placeholder="VD: 0912345678" maxlength="11">
+        <div class="note-mvd">Sử dụng số điện thoại bạn đã đặt hàng để tra cứu</div>
         
         <button id="searchBtn" onclick="performSearch()">Tra cứu ngay</button>
 
@@ -48,30 +48,31 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzamADKpShC7apqEszYOqYGouEXvbAdtfXhr3xR740NnVKPNLoulxn0p2ytMHX2qdgK/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzDgyjlFxIpIbN-NgYjf6EAwbNprxXMSqHvqg2-wIQM011WZ_nBST8ykgC9Pb05AVlA/exec";
 
         async function performSearch() {
             const inputEle = document.getElementById('orderInput');
             const btnEle = document.getElementById('searchBtn');
             const resultBox = document.getElementById('resultBox');
-            let maDon = inputEle.value.trim().toUpperCase();
+            
+            // Lấy thẳng số điện thoại và loại bỏ khoảng trắng
+            let sdt = inputEle.value.trim();
 
-            if (!maDon) {
-                alert("Vui lòng nhập mã đơn hàng!");
+            if (!sdt) {
+                alert("Vui lòng nhập số điện thoại!");
                 return;
             }
-            
-            if (!maDon.startsWith("OD")) {
-                maDon = "OD" + maDon;
-                inputEle.value = maDon;
-            }
+
+            // Chỉ giữ lại các chữ số
+            sdt = sdt.replace(/\D/g, '');
 
             btnEle.innerText = "Đang tìm kiếm...";
             btnEle.disabled = true;
             resultBox.style.display = "none";
 
             try {
-                const response = await fetch(`${API_URL}?maDon=${maDon}`);
+                // Đổi tham số truyền đi thành sdt
+                const response = await fetch(`${API_URL}?sdt=${sdt}`);
                 const data = await response.json();
 
                 btnEle.innerText = "Tra cứu ngay";
@@ -85,21 +86,19 @@
                     if (isNaN(balanceNum)) balanceNum = 0;
 
                     let paymentHtml = "";
-                    if (data.balance.toString().indexOf("Đã thanh toán") === -1) {
-                        if (data.payment.toUpperCase().includes("COD")) {
-                            let totalWithShip = balanceNum + 13000;
-                            paymentHtml = `<br>💰 <b>Cần trả (+13k ship):</b> <span class="highlight-money">${totalWithShip.toLocaleString('vi-VN')} VNĐ</span>`;
-                        } else {
-                            paymentHtml = `<br>💰 <b>Còn nợ:</b> <span class="highlight-money">${balanceNum.toLocaleString('vi-VN')} VNĐ</span>`;
-                        }
-                    } else {
-                        paymentHtml = `<br>💰 <b>Trạng thái:</b> <span style="color:green; font-weight:bold;">✅ Đã thanh toán</span>`;
+                    
+                    // NẾU ĐÃ THANH TOÁN (Trạng thái webhook gạch nợ thành công hoặc nợ = 0)
+                    if (data.isPaid || balanceNum === 0) {
+                        paymentHtml = `💰 <b>Trạng thái:</b> <span style="color:#059669; font-weight:bold;">✅ Đã thanh toán đầy đủ</span>`;
+                    } 
+                    // NẾU CÒN NỢ (Khách chỉ mới cọc, yêu cầu CK phần còn lại)
+                    else {
+                        paymentHtml = `💰 <b>Cần CK phần còn lại:</b> <span class="highlight-money">${balanceNum.toLocaleString('vi-VN')} VNĐ</span>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;"><i>(Vui lòng chuyển khoản phần còn lại để hoàn tất)</i></div>`;
                     }
 
-                    // --- CHỈNH SỬA LOGIC KIỂM TRA MÃ VẬN ĐƠN Ở ĐÂY ---
                     let mvd = data.maVanDon ? data.maVanDon.toString().trim() : "";
                     
-                    // Nếu mvd trống hoặc chứa các từ khóa "chờ", "lấy", "đang", "trống"
                     const isInvalid = mvd === "" || 
                                      mvd.toLowerCase().includes("đang") || 
                                      mvd.toLowerCase().includes("chờ") || 
@@ -127,7 +126,6 @@
                             👤 <b>Người nhận:</b> ${data.name}<br>
                             📞 <b>SĐT:</b> ${data.phone}<br>
                             🏠 <b>Địa chỉ:</b> ${data.address}<br>
-                            💳 <b>Thanh toán:</b> ${data.payment}
                             ${paymentHtml}<br>
                             📝 <b>Ghi chú:</b> ${data.note || "Không có"}
                         </div>
@@ -139,7 +137,7 @@
                     resultBox.className = "error-box";
                     resultBox.innerHTML = `
                         <div class="result-title" style="color: #b91c1c;">❌ Không thấy đơn</div>
-                        <div style="font-size: 13px; color: #991b1b;">Vui lòng kiểm tra lại mã đơn (6 số cuối SĐT)</div>
+                        <div style="font-size: 13px; color: #991b1b;">Vui lòng kiểm tra lại số điện thoại hoặc bạn chưa đặt hàng</div>
                     `;
                 }
             } catch (error) {
