@@ -48,7 +48,7 @@
         <h2>Xác nhận thông tin</h2>
         <p class="desc">Vui lòng điền đúng thông tin để shop gửi hàng</p>
 
-        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbzPpaoQVgnU8WKZkKkfavIPdgU88m8zZPDFi3FQ8XmrxAgluzy4CMGAvpxxudPNpWkF/exec" method="POST" onsubmit="goToPayment(event)">
+        <form id="orderForm" action="https://script.google.com/macros/s/AKfycbx6L3o42UIZlHvG314tlawD3k7k1FX9V7iEen30n6PRR8XqnGVrJ1QWGfJJ1cxpGY5s/exec" method="POST" onsubmit="goToPayment(event)">
             
             <label>Tên người nhận hàng</label>
             <input name="name" id="name" placeholder="Nguyễn Văn A" required>
@@ -88,7 +88,7 @@
             
             <div class="total-box">
                 <p style="margin: 0 0 5px 0;">Tổng tiền hàng: <span id="tong_tien_text" class="highlight-red">265.000</span> VNĐ</p>
-                <p style="margin: 0 0 5px 0;">Số tiền cần Cọc/CK: <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
+                <p style="margin: 0 0 5px 0;">Đã trả trước: <span id="da_tra_text" class="highlight-red">130.000</span> VNĐ</p>
                 
                 <div id="can_thanh_toan_div" style="margin: 10px 0; display: block; padding-top: 5px; border-top: 1px dashed #3b82f6;">
                     Số tiền cần CK phần còn lại: <span id="remain_text" class="highlight-red">135.000</span> VNĐ
@@ -100,13 +100,13 @@
             <label>Ghi chú </label>
             <textarea name="note" id="note" placeholder="Nếu có"></textarea>
 
-            <button type="submit" class="btn-primary" id="nextBtn">Tiếp tục: Thanh toán</button>
+            <button type="submit" class="btn-primary" id="nextBtn">Tiếp tục: Lấy mã QR phần còn lại</button>
         </form>
     </div>
 
     <div class="card" id="paymentCard" style="display: none; text-align: center;">
-        <h2 style="margin-bottom: 5px;">Thanh toán đơn hàng</h2>
-        <p class="desc" style="margin-bottom: 15px;">Quét mã QR dưới đây để thanh toán</p>
+        <h2 style="margin-bottom: 5px;">Thanh toán phần còn lại</h2>
+        <p class="desc" style="margin-bottom: 15px;">Quét mã QR dưới đây để thanh toán số tiền còn nợ</p>
         
         <img id="qrCodeImg" src="" alt="Mã QR Thanh toán" style="width: 250px; height: 250px; object-fit: contain; border-radius: 12px; border: 1px solid #cbd5e1; background: white; padding: 10px;">
         
@@ -156,7 +156,6 @@
     }
 
     function calcRemain() {
-        // Lấy số liệu nhập
         let soBox = parseInt(document.getElementById("so_box").value);
         if (isNaN(soBox) || soBox < 1) soBox = 1; 
 
@@ -164,25 +163,25 @@
         let gia1Box = 265000;
         let coc1Box = 130000;
 
-        // Tính toán tiền
         let tongTien = soBox * gia1Box;
         let tienDaTra = (hinhThuc === "coc") ? (soBox * coc1Box) : tongTien;
         let tienConLai = tongTien - tienDaTra;
 
-        // Tính toán Ship
         let phiShip = 0;
         if (soBox <= 2) phiShip = 14000;
         else if (soBox > 2 && soBox <= 4) phiShip = 17000;
 
-        // Đẩy ra giao diện
         document.getElementById("tong_tien_text").innerText = tongTien.toLocaleString('vi-VN');
         document.getElementById("da_tra_text").innerText = tienDaTra.toLocaleString('vi-VN');
         
+        // ĐỔI TEXT NÚT BẤM DỰA VÀO HÌNH THỨC
         if (hinhThuc === "coc") {
             document.getElementById("can_thanh_toan_div").style.display = "block";
             document.getElementById("remain_text").innerText = tienConLai.toLocaleString('vi-VN');
+            document.getElementById("nextBtn").innerText = "Tiếp tục: Lấy mã QR phần còn lại";
         } else {
             document.getElementById("can_thanh_toan_div").style.display = "none";
+            document.getElementById("nextBtn").innerText = "✅ Xác nhận & Gửi đơn hàng";
         }
 
         if (phiShip > 0) {
@@ -191,7 +190,6 @@
             document.getElementById("phi_ship_text").innerText = "Sẽ báo giá sau";
         }
 
-        // Cập nhật biến ẩn gửi đi
         document.getElementById("total").value = tongTien;
         document.getElementById("paid").value = tienDaTra;
     }
@@ -203,35 +201,61 @@
 
     function goToPayment(event) {
         event.preventDefault(); 
-
-        const phone = document.getElementById("phone").value;
-        const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
-        const source = document.getElementById("source").value;
-        const prefix = (source === "Facebook") ? "FB" : (source === "Zalo" ? "ZL" : "");
-        let accName = removeVietnameseTones(document.getElementById("account").value);
-
-        let des = `${orderId} ${prefix} ${accName}`.trim();
-        const amountToPay = parseFloat(document.getElementById("paid").value) || 0; 
         
-        let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2`;
-        if (amountToPay > 0) { 
-            qrUrl += `&amount=${amountToPay}&des=${encodeURIComponent(des)}`; 
+        let hinhThuc = document.getElementById("hinh_thuc_coc").value;
+
+        // BỎ QUA QR NẾU ĐÃ CHUYỂN KHOẢN TOÀN BỘ
+        if (hinhThuc === "ck") {
+            submitFormDirectly();
+        } 
+        // HIỆN QR CHO SỐ TIỀN CÒN LẠI NẾU CHỌN CỌC
+        else {
+            const phone = document.getElementById("phone").value;
+            const orderId = phone.length >= 6 ? "OD" + phone.slice(-6) : "OD" + phone;
+            const source = document.getElementById("source").value;
+            const prefix = (source === "Facebook") ? "FB" : (source === "Zalo" ? "ZL" : "");
+            let accName = removeVietnameseTones(document.getElementById("account").value);
+
+            let des = `${orderId} ${prefix} ${accName}`.trim();
+            
+            let total = parseFloat(document.getElementById("total").value) || 0;
+            let paid = parseFloat(document.getElementById("paid").value) || 0;
+            let remain = total - paid; // CHỈ TẠO QR ĐÚNG SỐ TIỀN CÒN LẠI
+            
+            let qrUrl = `https://qr.sepay.vn/img?acc=96247HT0511&bank=BIDV&template=compact2&amount=${remain}&des=${encodeURIComponent(des)}`;
+            
+            document.getElementById("qrCodeImg").src = qrUrl;
+            document.getElementById("payAmountTxt").innerText = remain.toLocaleString('vi-VN') + " VNĐ";
+            document.getElementById("payDescTxt").innerText = des;
+
+            document.getElementById("formCard").style.display = "none";
+            document.getElementById("paymentCard").style.display = "block";
+            window.scrollTo(0, 0);
         }
-        
-        document.getElementById("qrCodeImg").src = qrUrl;
-        document.getElementById("payAmountTxt").innerText = amountToPay.toLocaleString('vi-VN') + " VNĐ";
-        document.getElementById("payDescTxt").innerText = des;
-
-        document.getElementById("formCard").style.display = "none";
-        document.getElementById("paymentCard").style.display = "block";
-        window.scrollTo(0, 0);
     }
 
-    function backToForm() {
-        document.getElementById("paymentCard").style.display = "none";
-        document.getElementById("formCard").style.display = "block";
+    // HÀM GỬI FORM TRỰC TIẾP (DÀNH CHO KHÁCH CK TOÀN BỘ)
+    async function submitFormDirectly() {
+        const btn = document.getElementById("nextBtn");
+        btn.innerText = "⏳ Đang xử lý...";
+        btn.disabled = true;
+
+        const form = document.getElementById("orderForm");
+        const formData = new FormData(form);
+        const data = new URLSearchParams();
+        for (const pair of formData) { data.append(pair[0], pair[1]); }
+
+        try {
+            await fetch(form.action, { method: "POST", body: data, mode: 'no-cors' });
+            setTimeout(() => { showSuccess(); }, 500);
+        } catch (error) {
+            alert("Lỗi gửi đơn! Vui lòng kiểm tra lại kết nối mạng.");
+            btn.innerText = "✅ Xác nhận & Gửi đơn hàng";
+            btn.disabled = false;
+        }
     }
 
+    // HÀM GỬI FORM SAU KHI QUÉT QR (DÀNH CHO KHÁCH CỌC)
     async function submitFormToSheet() {
         const btn = document.getElementById("confirmPayBtn");
         btn.innerText = "⏳ Đang gửi hệ thống...";
@@ -252,6 +276,11 @@
         }
     }
 
+    function backToForm() {
+        document.getElementById("paymentCard").style.display = "none";
+        document.getElementById("formCard").style.display = "block";
+    }
+
     function showSuccess() {
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
@@ -262,11 +291,10 @@
         const orderId = "OD" + phone.slice(-6);
         document.getElementById("displayOrderId").innerText = orderId;
         
-        let hinhThucText = (hinhThuc === "coc") ? "Chỉ cọc" : "Chuyển khoản toàn bộ";
+        let hinhThucText = (hinhThuc === "coc") ? "Chỉ cọc (Đã tạo mã thanh toán phần còn lại)" : "Đã chuyển khoản toàn bộ";
         
-        // --- CHỈNH SỬA TỪ NGỮ Ở ĐÂY ---
         let remainInfo = (hinhThuc === "coc") 
-            ? `💰 <b>Cần CK phần còn lại:</b> <span style="color:red;">${document.getElementById("remain_text").innerText} VNĐ</span>`
+            ? `💰 <b>Cần thanh toán phần còn lại:</b> <span style="color:red;">${document.getElementById("remain_text").innerText} VNĐ</span>`
             : `✅ <b>Trạng thái:</b> <span style="color:#059669; font-weight:bold;">Đã thanh toán đủ tiền hàng</span>`;
 
         document.getElementById("infoSummary").innerHTML = `
@@ -280,6 +308,7 @@
         `;
 
         document.getElementById("paymentCard").style.display = "none";
+        document.getElementById("formCard").style.display = "none";
         document.getElementById("successCard").style.display = "block";
         window.scrollTo(0, 0);
     }
